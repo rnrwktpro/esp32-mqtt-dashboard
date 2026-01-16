@@ -66,21 +66,19 @@ client.on("connect", () => {
 
 client.on("message", (topic, message) => {
   const now = Date.now();
-  lastSeen = now;
 
+  // ✅ GPIO 상태 (retain 허용, 생존 판단 ❌)
   if (topic === "esp32/gpio/13") {
     const val = message.toString();
-
-    // 🔁 표기 변경
-    if (val === "1") {
-      gpioEl.innerText = "GPIO13 : OFF";
-    } else {
-      gpioEl.innerText = "GPIO13 : ON";
-    }
+    gpioEl.innerText = (val === "1") ? "GPIO13 : OFF" : "GPIO13 : ON";
   }
 
-  delayEl.innerText =
-    "마지막 수신: " + new Date(now).toLocaleTimeString();
+  // ✅ heartbeat만 생존 판단
+  if (topic === "esp32/heartbeat") {
+    lastSeen = now;
+    delayEl.innerText =
+      "마지막 신호: " + new Date(now).toLocaleTimeString();
+  }
 });
 
 // =====================
@@ -108,3 +106,4 @@ setInterval(() => {
 
 </body>
 </html>
+
