@@ -14,8 +14,15 @@
     text-align:center;
     margin-top:60px;
   }
-  .online { color:#0f0; font-size:36px;  }
-  .error  { color:#f00; font-weight:bold; font-size:36px;  }
+  .online { 
+    color:#0f0; 
+    font-size:36px;  
+  }
+  .error  { 
+    color:#f00; 
+    font-weight:bold; 
+    font-size:36px;  
+  }
 </style>
 </head>
 
@@ -38,6 +45,9 @@ const MQTT_PASS = "1234qwerQWER";
 const statusEl = document.getElementById("status");
 const gpioEl   = document.getElementById("gpio");
 
+// 장치 상태 플래그
+let deviceOnline = false;
+
 // =====================
 // MQTT 연결
 // =====================
@@ -58,27 +68,39 @@ client.on("connect", () => {
 client.on("message", (topic, message) => {
   const val = message.toString();
 
+  // ----- 상태 토픽 -----
   if (topic === "esp32/status") {
+
     if (val === "online") {
+      deviceOnline = true;
       statusEl.innerText = "정상 동작";
       statusEl.className = "online";
-    } else {
+    } 
+    else {
+      deviceOnline = false;
       statusEl.innerText = "⚠ 모니터링 장치 OFF";
       statusEl.className = "error";
+      gpioEl.innerText = "모니터링 장치 OFF";
     }
   }
 
+  // ----- GPIO 토픽 -----
   if (topic === "esp32/gpio/13") {
+
+    // OFF 상태면 GPIO 표시하지 않음
+    if (!deviceOnline) {
+      gpioEl.innerText = "모니터링 장치 OFF";
+      return;
+    }
+
+    // 정상 동작일 때만 GPIO 표시
     gpioEl.innerText =
-      (val === "1") ? "현재상태 : 펌프 꺼짐(OFF)" : "현재상태 : 펌프 켜짐(ON)";
+      (val === "1")
+        ? "현재상태 : 펌프 꺼짐(OFF)"
+        : "현재상태 : 펌프 켜짐(ON)";
   }
 });
 </script>
 
 </body>
 </html>
-
-
-
-
-
