@@ -63,7 +63,7 @@ client.on("message", (topic, message) => {
       statusEl.innerText = "정상 동작";
       statusEl.className = "online";
     } else {
-      statusEl.innerText = "⚠ 모니터링 장치 OFF 및 고장";
+      statusEl.innerText = "⚠ 모니터링 장치 OFF";
       statusEl.className = "error";
     }
   }
@@ -77,6 +77,7 @@ client.on("message", (topic, message) => {
 
 </body>
 </html>
+
 
 
 
