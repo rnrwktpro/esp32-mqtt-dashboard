@@ -21,7 +21,7 @@
 
 <body>
 
-<h2>ESP32 GPIO 모니터</h2>
+<h2>펌프 모니터링 시스템</h2>
 
 <div id="status" class="error">연결 대기중...</div>
 <div id="gpio" style="font-size:40px;margin-top:20px;">-</div>
@@ -63,17 +63,18 @@ client.on("message", (topic, message) => {
       statusEl.innerText = "정상 동작";
       statusEl.className = "online";
     } else {
-      statusEl.innerText = "⚠ ESP32 OFFLINE";
+      statusEl.innerText = "⚠ 모니터링 장치 OFF 및 고장";
       statusEl.className = "error";
     }
   }
 
   if (topic === "esp32/gpio/13") {
     gpioEl.innerText =
-      (val === "1") ? "GPIO13 : OFF" : "GPIO13 : ON";
+      (val === "1") ? "현재상태 : 펌프 꺼짐(OFF)" : "현재상태 : 펌프 켜짐(ON)";
   }
 });
 </script>
 
 </body>
 </html>
+
