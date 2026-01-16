@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>ESP32 상태 모니터</title>
+
 <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
 
 <style>
@@ -11,42 +12,31 @@
     color:#0f0;
     font-family: Arial, sans-serif;
     text-align:center;
-    margin-top:50px;
+    margin-top:60px;
   }
   .online { color:#0f0; }
-  .delay  { color:#ff0; }
   .error  { color:#f00; font-weight:bold; }
 </style>
 </head>
+
 <body>
 
-<h2>ESP32 GPIO 상태</h2>
+<h2>ESP32 GPIO 모니터</h2>
 
-<div id="status" class="online">연결 대기중...</div>
+<div id="status" class="error">연결 대기중...</div>
 <div id="gpio" style="font-size:40px;margin-top:20px;">-</div>
-<div id="delay" style="margin-top:10px;color:#aaa;">-</div>
 
 <script>
 // =====================
-// MQTT 설정
+// MQTT 설정 (SUBSCRIBE 계정)
 // =====================
 const MQTT_URL  = "wss://8ec1da5a0b454c74ad3232327ead143a.s1.eu.hivemq.cloud:8884/mqtt";
-const MQTT_USER = "esp32_2";          // SUBSCRIBE_ONLY 계정
-const MQTT_PASS = "1234qwerQWER";  // 2번 계정 비번
+const MQTT_USER = "esp32_2";
+const MQTT_PASS = "1234qwerQWER";
 
-// =====================
-// 시간 설정
-// =====================
-const ERROR_TIMEOUT = 180000; // 3분 (ms)
-
-let lastSeen = null;
-
-// =====================
-// DOM
 // =====================
 const statusEl = document.getElementById("status");
 const gpioEl   = document.getElementById("gpio");
-const delayEl  = document.getElementById("delay");
 
 // =====================
 // MQTT 연결
@@ -59,51 +49,31 @@ const client = mqtt.connect(MQTT_URL, {
 });
 
 client.on("connect", () => {
-  statusEl.innerText = "MQTT 연결됨";
-  statusEl.className = "online";
   client.subscribe("esp32/#");
 });
 
+// =====================
+// 메시지 수신
+// =====================
 client.on("message", (topic, message) => {
-  const now = Date.now();
+  const val = message.toString();
 
-  // ✅ GPIO 상태 (retain 허용, 생존 판단 ❌)
-  if (topic === "esp32/gpio/13") {
-    const val = message.toString();
-    gpioEl.innerText = (val === "1") ? "GPIO13 : OFF" : "GPIO13 : ON";
+  if (topic === "esp32/status") {
+    if (val === "online") {
+      statusEl.innerText = "정상 동작";
+      statusEl.className = "online";
+    } else {
+      statusEl.innerText = "⚠ ESP32 OFFLINE";
+      statusEl.className = "error";
+    }
   }
 
-  // ✅ heartbeat만 생존 판단
-  if (topic === "esp32/heartbeat") {
-    lastSeen = now;
-    delayEl.innerText =
-      "마지막 신호: " + new Date(now).toLocaleTimeString();
+  if (topic === "esp32/gpio/13") {
+    gpioEl.innerText =
+      (val === "1") ? "GPIO13 : OFF" : "GPIO13 : ON";
   }
 });
-
-// =====================
-// 주기적 상태 점검
-// =====================
-setInterval(() => {
-  if (!lastSeen) return;
-
-  const diff = Date.now() - lastSeen;
-  const sec  = Math.floor(diff / 1000);
-
-  if (diff > ERROR_TIMEOUT) {
-    statusEl.innerText = "⚠ 이상작동 (신호 지연 " + sec + "초)";
-    statusEl.className = "error";
-    delayEl.innerText = "마지막 정상 수신 이후 " + sec + "초 경과";
-  } else if (sec > 30) {
-    statusEl.innerText = "지연 발생 (" + sec + "초)";
-    statusEl.className = "delay";
-  } else {
-    statusEl.innerText = "정상 동작 (" + sec + "초)";
-    statusEl.className = "online";
-  }
-}, 1000);
 </script>
 
 </body>
 </html>
-
